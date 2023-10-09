@@ -1,0 +1,108 @@
+/dts-v1/;
+/plugin/;
+
+/ {
+	compatible = "rockchip,rk3568";
+
+	fragment@0 {
+		target-path = "/";
+		__overlay__ {
+
+			sdio_pwrseq: sdio-pwrseq {
+				status = "okay";
+				compatible = "mmc-pwrseq-simple";
+				clocks = <&rk809 1>;
+				clock-names = "ext_clock";
+				pinctrl-names = "default";
+				pinctrl-0 = <&wifi_reg_on_h>;
+				reset-gpios = <&gpio3 28 1>;//1: GPIO_ACTIVE_LOW
+			};
+		};
+	};
+
+	fragment@1 {
+		target = <&sdmmc2>;
+		__overlay__ {
+
+			status = "okay";
+			#address-cells = <1>;
+			#size-cells = <0>;
+			bus-width = <4>;
+			disable-wp;
+			cap-sd-highspeed;
+			cap-sdio-irq;
+			keep-power-in-suspend;
+			mmc-pwrseq = <&sdio_pwrseq>;
+			non-removable;
+			pinctrl-names = "default";
+			pinctrl-0 = <&sdmmc2m0_bus4 &sdmmc2m0_clk &sdmmc2m0_cmd>;
+			sd-uhs-sdr104;
+			vmmc-supply = <&vcc_3v3>;
+			vqmmc-supply = <&vcc_1v8>;
+
+			wifi@1 {
+				compatible = "brcm,bcm4329-fmac";
+				reg = <1>;
+				interrupt-parent = <&gpio3>;
+				interrupts = <29 4>;//4: IRQ_TYPE_LEVEL_HIGH
+				interrupt-names = "host-wake";
+				pinctrl-names = "default";
+				pinctrl-0 = <&wifi_host_wake_h>;
+			};
+		};
+	};
+
+	fragment@2 {
+		target = <&uart8>;
+		__overlay__ {
+
+			status = "okay";
+			pinctrl-names = "default";
+			pinctrl-0 = <&uart8m0_xfer &uart8m0_ctsn &uart8m0_rtsn>;
+
+			bluetooth {
+				compatible = "brcm,bcm4345c5";
+				clocks = <&rk809 1>;
+				clock-names = "lpo";
+				device-wakeup-gpios = <&gpio4 13 0>;//0: GPIO_ACTIVE_HIGH
+				host-wakeup-gpios = <&gpio4 12 0>;//0: GPIO_ACTIVE_HIGH
+				shutdown-gpios = <&gpio4 10 0>;//0: GPIO_ACTIVE_HIGH
+				max-speed = <1500000>;
+				pinctrl-names = "default";
+				pinctrl-0 = <&bt_host_wake_l &bt_wake_l &bt_enable_h>;
+				vbat-supply = <&vcc3v3_sys>;
+				vddio-supply = <&vcc_1v8>;
+			};
+		};
+	};
+
+	fragment@3 {
+		target = <&pinctrl>;
+		__overlay__ {
+
+			wifi {
+				wifi_reg_on_h: wifi-reg-on-h {
+					rockchip,pins = <3 28 0 &pcfg_pull_none>;
+				};
+
+				wifi_host_wake_h: wifi-host-wake-h {
+					rockchip,pins = <3 29 0 &pcfg_pull_none>;
+				};
+			};
+
+			bt {
+				bt_host_wake_l: bt-host-wake-l {
+					rockchip,pins = <4 13 0 &pcfg_pull_none>;
+				};
+
+				bt_wake_l: bt-wake-l {
+					rockchip,pins = <4 12 0 &pcfg_pull_none>;
+				};
+
+				bt_enable_h: bt-enable-h {
+					rockchip,pins = <4 10 0 &pcfg_pull_none>;
+				};
+			};
+		};
+	};
+};
